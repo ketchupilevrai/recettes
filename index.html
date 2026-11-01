@@ -1,0 +1,1201 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Carnet de recettes</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#F6F0E4">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Recettes">
+<meta name="robots" content="noindex, nofollow">
+<style>
+  :root{
+    --papier:#F6F0E4; --papier2:#EFE7D7; --encre:#17140F; --sourdine:#7A6E5E;
+    --filet:#D9CFBB; --accent:#A8451F; --accent2:#8C6A2F;
+    --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Times New Roman",serif;
+    --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--papier);color:var(--encre)}
+  body{font-family:var(--serif);font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased}
+
+  /* ---------- couverture ---------- */
+  .couverture{padding:54px 34px 30px;border-bottom:2px solid var(--encre);position:relative}
+  .couverture .surtitre{font-family:var(--mono);font-size:10px;letter-spacing:.32em;text-transform:uppercase;color:var(--sourdine)}
+  .couverture h1{font-size:clamp(42px,8vw,92px);line-height:.92;font-weight:400;margin:14px 0 12px;letter-spacing:-.03em}
+  .couverture h1 em{font-style:italic;color:var(--accent)}
+  .couverture .st{font-style:italic;color:var(--sourdine);font-size:18px;max-width:600px}
+  .couverture .pied{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-top:26px;
+    font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--sourdine)}
+  .couverture .pied b{font-weight:400;color:var(--encre)}
+  .filet{position:absolute;left:34px;right:34px;bottom:-3px;height:1px;background:var(--encre)}
+
+  /* ---------- disposition ---------- */
+  .corps{display:grid;grid-template-columns:288px minmax(0,1fr)}
+  .sommaire{border-right:1px solid var(--filet);padding:30px 24px 60px;position:sticky;top:0;align-self:start;max-height:100vh;overflow:auto}
+  .sommaire .lab{font-family:var(--mono);font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:var(--sourdine);margin:0 0 14px}
+  .cat{font-family:var(--mono);font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--accent2);margin:18px 0 6px}
+  .item{display:block;width:100%;text-align:left;background:none;border:0;border-bottom:1px dotted var(--filet);padding:9px 0;font-family:var(--serif);font-size:16.5px;color:var(--encre);cursor:pointer;transition:.14s}
+  .item:hover{color:var(--accent);padding-left:5px}
+  .item.on{color:var(--accent);font-style:italic}
+  .item .n{font-family:var(--mono);font-size:10px;color:var(--sourdine);margin-right:8px}
+
+  main{padding:40px 40px 90px;max-width:900px}
+  .kicker{font-family:var(--mono);font-size:9.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--sourdine)}
+  .kicker a{color:var(--sourdine)}
+  h2{font-size:clamp(32px,5vw,56px);line-height:1;font-weight:400;margin:10px 0 8px;letter-spacing:-.025em}
+  .accroche{font-style:italic;color:var(--sourdine);font-size:19px;margin:0 0 22px;max-width:56ch}
+
+  .meta{display:flex;gap:0;flex-wrap:wrap;border-top:1px solid var(--encre);border-bottom:1px solid var(--encre);margin:0 0 26px}
+  .meta div{padding:10px 22px 10px 0;margin-right:22px;border-right:1px solid var(--filet)}
+  .meta div:last-child{border-right:0;margin-right:0}
+  .meta .k{font-family:var(--mono);font-size:8.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--sourdine);display:block;margin-bottom:2px}
+  .meta .v{font-size:16px}
+
+  .ingredients{border:1px solid var(--encre);padding:18px 20px;margin:0 0 30px;background:var(--papier2)}
+  .ingredients .tete{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+  .ingredients h3{font-family:var(--mono);font-size:9.5px;letter-spacing:.22em;text-transform:uppercase;margin:0;color:var(--encre);font-weight:400}
+  .doseurs{display:flex;gap:4px}
+  .doseurs button{font-family:var(--mono);font-size:10px;letter-spacing:.08em;background:transparent;border:1px solid var(--filet);color:var(--sourdine);padding:4px 8px;cursor:pointer;transition:.12s}
+  .doseurs button:hover{border-color:var(--encre);color:var(--encre)}
+  .doseurs button.on{background:var(--encre);color:var(--papier);border-color:var(--encre)}
+  .ingredients ul{margin:0;padding:0;list-style:none;columns:2;column-gap:34px}
+  .ingredients li{break-inside:avoid;padding:5px 0;border-bottom:1px dotted var(--filet);display:flex;gap:8px;font-size:16px}
+  .ingredients li .q{font-family:var(--mono);font-size:13px;color:var(--accent);min-width:74px;display:inline-block}
+
+  .etapes{list-style:none;margin:0;padding:0;counter-reset:e}
+  .etapes li{counter-increment:e;position:relative;padding:0 0 26px 54px;margin-bottom:6px}
+  .etapes li:before{content:counter(e,decimal-leading-zero);position:absolute;left:0;top:-2px;font-family:var(--mono);font-size:12px;
+    color:var(--accent);border:1px solid var(--accent);border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center}
+  .etapes h4{margin:0 0 5px;font-size:19px;font-weight:400;letter-spacing:-.01em}
+  .etapes p{margin:0;color:#2C2721}
+  .aten{margin-top:8px;padding:9px 12px;border-left:2px solid var(--accent);background:rgba(168,69,31,.06);font-size:14.5px;color:#5A2A18}
+  .astuce{margin-top:8px;padding:9px 12px;border-left:2px solid var(--accent2);background:rgba(140,106,47,.07);font-size:14.5px;color:#4A3A1C}
+  .aten b,.astuce b{font-family:var(--mono);font-size:9px;letter-spacing:.18em;text-transform:uppercase;display:block;margin-bottom:3px}
+
+  .bloc{border-top:1px solid var(--filet);margin-top:30px;padding-top:18px}
+  .bloc h3{font-family:var(--mono);font-size:9.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--sourdine);font-weight:400;margin:0 0 8px}
+  .bloc p{margin:0 0 6px;color:#2C2721}
+  .bloc ul{margin:0;padding-left:18px;color:#2C2721}
+  .bloc li{margin-bottom:4px}
+
+  .source{margin-top:34px;font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--sourdine)}
+  .source a{color:var(--accent);text-decoration:none;border-bottom:1px solid var(--accent)}
+
+  footer{border-top:2px solid var(--encre);padding:22px 34px 60px;font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--sourdine)}
+
+  /* ---------- bouton mode cuisine ---------- */
+  .btn-cuisine{display:inline-flex;align-items:center;gap:10px;background:var(--encre);color:var(--papier);border:0;
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;padding:13px 20px;cursor:pointer;margin:0 0 26px;transition:.14s}
+  .btn-cuisine:hover{background:var(--accent)}
+  .btn-cuisine .pt{width:7px;height:7px;border-radius:50%;background:var(--accent)}
+
+  /* ---------- écran mode cuisine (type Thermomix) ---------- */
+  #mode{position:fixed;inset:0;z-index:999;background:#0B0B0C;color:#F5F2EC;display:none;
+    grid-template-rows:auto 1fr auto;font-family:var(--serif);height:100dvh;overflow:hidden;
+    -webkit-user-select:none;user-select:none;touch-action:manipulation}
+  #mode.on{display:grid}
+  #mode .haut{padding:14px 20px 0}
+  #mode .segments{display:flex;gap:4px;height:3px}
+  #mode .segments i{flex:1;background:#2A2A2C;transition:.3s}
+  #mode .segments i.fait{background:#F0A62B}
+  #mode .segments i.courant{background:#8A6417}
+  #mode .barre{display:flex;justify-content:space-between;align-items:center;padding:14px 0 0;font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#8C877E}
+  #mode .barre .quitter{background:none;border:1px solid #2E2E31;color:#8C877E;width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:15px;line-height:1}
+  #mode .barre .quitter:hover{border-color:#F5F2EC;color:#F5F2EC}
+  #mode .facteur{display:flex;gap:3px;align-items:center}
+  #mode .facteur span{font-family:var(--mono);font-size:10px;color:#5E5A54;margin-right:4px}
+  #mode .facteur button{background:none;border:1px solid #2E2E31;color:#8C877E;font-family:var(--mono);font-size:11px;
+    padding:5px 9px;border-radius:7px;cursor:pointer;line-height:1}
+  #mode .facteur button.on{background:#F0A62B;border-color:#F0A62B;color:#140F04}
+
+  #mode .centre{display:flex;flex-direction:column;justify-content:center;padding:0 26px;position:relative}
+  #mode .acte{font-family:var(--mono);font-size:13px;letter-spacing:.32em;text-transform:uppercase;color:#F0A62B;margin-bottom:22px}
+  #mode .q{font-size:clamp(74px,23vw,150px);line-height:.9;font-weight:400;letter-spacing:-.045em;margin:0;color:#FFFFFF}
+  #mode .nom{font-size:clamp(27px,7vw,42px);line-height:1.12;margin:12px 0 0;color:#F5F2EC;letter-spacing:-.015em;font-weight:400}
+  #mode .det{font-size:17px;color:#A8A29A;margin:20px 0 0;max-width:26ch;line-height:1.5}
+  #mode .chrono{margin-top:26px;display:none}
+  #mode .chrono.on{display:block}
+  #mode .chrono button{background:none;border:1px solid #F0A62B;color:#F0A62B;font-family:var(--mono);font-size:12px;letter-spacing:.16em;
+    text-transform:uppercase;padding:12px 18px;border-radius:999px;cursor:pointer}
+  #mode .chrono .restant{font-family:var(--mono);font-size:36px;letter-spacing:-.02em;color:#F5F2EC;margin-top:6px;display:none}
+  #mode .chrono.actif .restant{display:block}
+  #mode .chrono.actif button{display:none}
+
+  #mode .bas{padding:0 20px calc(24px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:10px}
+  #mode .valider{width:100%;border:0;background:#F0A62B;color:#140F04;padding:22px;font-family:var(--mono);font-size:13px;
+    letter-spacing:.24em;text-transform:uppercase;cursor:pointer;border-radius:14px;transition:.12s}
+  #mode .valider:active{transform:scale(.985);background:#FFBB4C}
+  #mode .retour{background:none;border:0;color:#6E6A63;font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;padding:6px;cursor:pointer}
+  #mode .retour:hover{color:#F5F2EC}
+
+  #mode .fin{display:none;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:30px;grid-row:1/-1}
+  #mode.termine .fin{display:flex}
+  #mode.termine .haut,#mode.termine .centre,#mode.termine .bas{display:none}
+  #mode .fin h2{font-size:clamp(34px,9vw,58px);margin:0 0 12px;font-weight:300;letter-spacing:-.02em}
+  #mode .fin p{color:#8C877E;font-size:16px;max-width:30ch;margin:0 0 26px}
+  #mode .fin button{background:#F0A62B;color:#140F04;border:0;padding:16px 26px;border-radius:12px;font-family:var(--mono);
+    font-size:11px;letter-spacing:.2em;text-transform:uppercase;cursor:pointer}
+
+  .anim{animation:glisse .28s ease}
+  @keyframes glisse{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+
+  @media(max-width:900px){
+    .corps{grid-template-columns:1fr}
+    .sommaire{position:static;max-height:none;border-right:0;border-bottom:1px solid var(--filet);padding:20px 22px}
+    .sommaire .liste{display:flex;gap:8px;flex-wrap:wrap}
+    .item{border:1px solid var(--filet);padding:7px 10px;font-size:14px;border-bottom:1px solid var(--filet)}
+    .cat{width:100%;margin:10px 0 0}
+    main{padding:26px 22px 70px}
+    .ingredients ul{columns:1}
+    .couverture{padding:34px 22px 24px}
+  }
+  @media print{
+    .sommaire,.doseurs{display:none}
+    .corps{grid-template-columns:1fr}
+    main{padding:0}
+    .couverture{border-bottom:1px solid #000}
+    .etapes li{page-break-inside:avoid}
+  }
+</style>
+</head>
+<body>
+
+<div class="couverture">
+  <div class="surtitre" id="surtitre">Recueil de cuisine</div>
+  <h1 id="titre-livre">Carnet<br><em>de recettes</em></h1>
+  <div class="st" id="st-livre"></div>
+  <div class="pied">
+    <span>Recettes : <b id="nb">—</b></span>
+    <span>Mis à jour le <b id="maj">—</b></span>
+    <span>Tenue par <b id="auteur">—</b></span>
+  </div>
+  <div class="filet"></div>
+</div>
+
+<div class="corps">
+  <nav class="sommaire">
+    <p class="lab">Sommaire</p>
+    <div class="liste" id="sommaire"></div>
+  </nav>
+  <main id="recette"></main>
+</div>
+
+<div id="mode" aria-hidden="true">
+  <div class="haut">
+    <div class="segments" id="segments"></div>
+    <div class="barre">
+      <span id="mode-titre">—</span>
+      <div class="facteur" id="mode-facteur">
+        <span>doses</span>
+        <button data-f="0.5">½</button><button data-f="1">1</button><button data-f="2">2</button><button data-f="3">3</button>
+      </div>
+      <span id="mode-compte">—</span>
+      <button class="quitter" id="mode-quitter" aria-label="Quitter">×</button>
+    </div>
+  </div>
+
+  <div class="centre" id="mode-centre">
+    <div class="acte" id="mode-acte">Ajouter</div>
+    <div class="q" id="mode-q">500 g</div>
+    <div class="nom" id="mode-nom">de farine</div>
+    <div class="det" id="mode-det"></div>
+    <div class="chrono" id="mode-chrono">
+      <button id="mode-demarrer">Démarrer le minuteur</button>
+      <div class="restant" id="mode-restant">00:00</div>
+    </div>
+  </div>
+
+  <div class="bas">
+    <button class="valider" id="mode-valider">Validé</button>
+    <button class="retour" id="mode-retour">Étape précédente</button>
+  </div>
+
+  <div class="fin">
+    <h2 id="fin-titre">C'est prêt</h2>
+    <p id="fin-texte">Toutes les étapes sont validées.</p>
+    <button id="fin-fermer">Fermer le mode cuisine</button>
+  </div>
+</div>
+
+<footer>Recettes collectées au fil des sources · quantités indiquées pour la version d'origine</footer>
+
+<script>window.LIVRE = {
+ "livre": {
+  "titre": "Carnet de recettes",
+  "sousTitre": "Recettes collectées, testées, gardées",
+  "auteur": "Thomas",
+  "maj": "1er novembre 2026"
+ },
+ "recettes": [
+  {
+   "id": "pate-a-crepe",
+   "titre": "Pâte à crêpes",
+   "categorie": "Bases",
+   "accroche": "Fine, sans grumeaux, à préparer quelques heures à l'avance",
+   "personnes": 10,
+   "personnesTexte": "8 à 10 personnes",
+   "prep": "10 min",
+   "cuisson": "3 min",
+   "repos": "1 h",
+   "auteur": "Maurice",
+   "source": {
+    "nom": "pate-a-crepe.info",
+    "url": "https://www.pate-a-crepe.info/recette-pate-a-crepe.html"
+   },
+   "ingredients": [
+    {
+     "q": 250,
+     "u": "g",
+     "nom": "farine"
+    },
+    {
+     "q": 4,
+     "u": "",
+     "nom": "œufs"
+    },
+    {
+     "q": 500,
+     "u": "ml",
+     "nom": "lait (un demi-litre)"
+    },
+    {
+     "q": 1,
+     "u": "pincée",
+     "nom": "sel"
+    },
+    {
+     "q": 50,
+     "u": "g",
+     "nom": "beurre"
+    },
+    {
+     "q": 1,
+     "u": "sachet",
+     "nom": "sucre vanillé"
+    },
+    {
+     "q": 5,
+     "u": "cl",
+     "nom": "rhum (une cuillère à soupe)"
+    }
+   ],
+   "materiel": [
+    "Un saladier",
+    "Un fouet",
+    "Une poêle antiadhésive plate",
+    "Une louche",
+    "Un linge propre"
+   ],
+   "etapes": [
+    {
+     "t": "Verser les ingrédients",
+     "txt": "Dans un saladier, verser la farine et les œufs. Puis, progressivement, ajouter le lait tout en mélangeant au fouet. Ajouter le sucre vanillé et la pincée de sel.",
+     "attention": "Ne mélangez pas la farine et les œufs avant de verser le lait : vous obtiendriez une pâte pleine de grumeaux, très difficile à rattraper.",
+     "astuce": "Pour ne pas avoir à huiler la crêpière, ajoutez 100 g de beurre fondu — mais il faut alors battre très fort la pâte, puis la mettre au froid pour que les micro-billes de beurre durcissent."
+    },
+    {
+     "t": "Laisser reposer",
+     "txt": "Laissez reposer la pâte une heure à température ambiante, le saladier recouvert d'un linge. Faites chauffer une poêle antiadhésive plate et à bords bas ; une fois chaude, versez un peu de beurre pour la graisser.",
+     "astuce": "Le repos n'est pas décoratif : il laisse la farine s'hydrater et fait disparaître l'amidon cru. Une pâte reposée se tient mieux à la cuisson."
+    },
+    {
+     "t": "Préparation à la poêle",
+     "txt": "Versez une demi-louche de pâte et faites cuire une à deux minutes par face. Pour retourner, décollez d'abord les bords ; quand la crêpe se décolle en entier, faites-la sauter d'un coup sec. Sinon, une spatule fait très bien l'affaire.",
+     "astuce": "La première crêpe est toujours ratée : elle sert à calibrer la chaleur et le gras. Ne la jetez pas, elle indique le réglage."
+    }
+   ],
+   "variantes": [
+    "Pour des crêpes plus savoureuses, remplacez une partie du lait par de la crème fraîche.",
+    "Sans alcool : supprimez le rhum, remplacez-le par une cuillère d'eau de fleur d'oranger."
+   ],
+   "service": "Sucre, pâte à tartiner, confiture, miel. En boisson, du cidre.",
+   "conservation": "La pâte se garde 24 h au réfrigérateur, couverte. Les crêpes cuites se congèlent très bien, séparées par du papier cuisson.",
+   "guide": [
+    {
+     "act": "Verser",
+     "qte": {
+      "n": 250,
+      "u": "g"
+     },
+     "nom": "de farine",
+     "det": "Dans un saladier",
+     "timer": 0
+    },
+    {
+     "act": "Ajouter",
+     "qte": {
+      "n": 4,
+      "u": ""
+     },
+     "nom": "œufs",
+     "det": "Entiers, sur la farine",
+     "timer": 0
+    },
+    {
+     "act": "Verser",
+     "qte": {
+      "n": 500,
+      "u": "ml"
+     },
+     "nom": "de lait",
+     "det": "Progressivement, en fouettant",
+     "timer": 0
+    },
+    {
+     "act": "Ajouter",
+     "qte": {
+      "n": 1,
+      "u": "sachet"
+     },
+     "nom": "de sucre vanillé",
+     "det": "",
+     "timer": 0
+    },
+    {
+     "act": "Ajouter",
+     "qte": {
+      "n": 1,
+      "u": "pincée"
+     },
+     "nom": "de sel",
+     "det": "",
+     "timer": 0
+    },
+    {
+     "act": "Ajouter",
+     "qte": {
+      "n": 5,
+      "u": "cl"
+     },
+     "nom": "de rhum",
+     "det": "Une cuillère à soupe",
+     "timer": 0
+    },
+    {
+     "act": "Mélanger",
+     "gros": "1 min",
+     "nom": "au fouet",
+     "det": "Jusqu'à disparition des grumeaux",
+     "timer": 60
+    },
+    {
+     "act": "Laisser reposer",
+     "gros": "1 h",
+     "nom": "à couvert",
+     "det": "À température ambiante, linge sur le saladier",
+     "timer": 3600
+    },
+    {
+     "act": "Cuire",
+     "gros": "1 à 2 min",
+     "nom": "par face",
+     "det": "Poêle chaude, une demi-louche par crêpe",
+     "timer": 90
+    }
+   ]
+  },
+  {
+   "id": "pate-a-gaufre",
+   "titre": "Pâte à gaufres",
+   "categorie": "Bases",
+   "accroche": "Légères et croustillantes, pour une douzaine de gaufres",
+   "personnes": 4,
+   "personnesTexte": "4 personnes · 12 gaufres",
+   "prep": "10 min",
+   "cuisson": "4 min",
+   "repos": "1 h",
+   "auteur": "pate-a-crepe.info",
+   "source": {
+    "nom": "pate-a-crepe.info",
+    "url": "https://www.pate-a-crepe.info/recette-pate-a-gaufre.html"
+   },
+   "ingredients": [
+    {
+     "q": 250,
+     "u": "g",
+     "nom": "farine"
+    },
+    {
+     "q": 80,
+     "u": "g",
+     "nom": "beurre"
+    },
+    {
+     "q": 50,
+     "u": "g",
+     "nom": "sucre en poudre"
+    },
+    {
+     "q": 500,
+     "u": "ml",
+     "nom": "lait (5 dl)"
+    },
+    {
+     "q": 3,
+     "u": "",
+     "nom": "œufs"
+    },
+    {
+     "q": 1,
+     "u": "pincée",
+     "nom": "sel"
+    }
+   ],
+   "materiel": [
+    "Un saladier",
+    "Un fouet",
+    "Un gaufrier",
+    "Une louche",
+    "Un torchon propre"
+   ],
+   "etapes": [
+    {
+     "t": "Faire fondre le beurre",
+     "txt": "Faites fondre le beurre et laissez-le refroidir avant de l'incorporer.",
+     "astuce": "Un beurre trop chaud cuit les œufs et fait retomber la pâte. Il doit être tiède, à peine coulant."
+    },
+    {
+     "t": "Battre les œufs, alterner lait et farine",
+     "txt": "Dans un saladier, battez les œufs entiers. Ajoutez ensuite, en alternance, le lait et la farine, progressivement, pour rendre le mélange homogène.",
+     "attention": "L'alternance n'est pas un détail : c'est elle qui évite les grumeaux. Tout le lait d'un coup sur la farine, et la pâte devient impossible à lisser."
+    },
+    {
+     "t": "Compléter et laisser reposer",
+     "txt": "Ajoutez le sucre, le sel et le beurre refroidi. Couvrez d'un torchon propre ou d'un couvercle et laissez reposer une heure.",
+     "attention": "La méthode du site mentionne aussi « la levure », absente de sa liste d'ingrédients. Si vous en ajoutez, comptez un sachet de levure chimique (11 g) : les gaufres seront plus aérées. Sans levure, elles sont plus croustillantes et plus plates.",
+     "astuce": "Chauffez le gaufrier avant chaque fournée et ne le remplissez qu'aux trois quarts : la pâte gonfle et déborde."
+    },
+    {
+     "t": "Cuire au gaufrier",
+     "txt": "Versez la pâte à l'aide d'une louche et laissez cuire chaque face une à deux minutes, selon votre goût.",
+     "astuce": "Pour des gaufres croustillantes, ouvrez le gaufrier trente secondes avant la fin : l'humidité s'échappe et la croûte se forme."
+    }
+   ],
+   "guide": [
+    {
+     "act": "Faire fondre",
+     "qte": {
+      "n": 80,
+      "u": "g"
+     },
+     "nom": "de beurre",
+     "det": "Puis laisser refroidir",
+     "timer": 120
+    },
+    {
+     "act": "Battre",
+     "qte": {
+      "n": 3,
+      "u": ""
+     },
+     "nom": "œufs",
+     "det": "Entiers, dans un saladier",
+     "timer": 60
+    },
+    {
+     "act": "Verser",
+     "qte": {
+      "n": 250,
+      "u": "g"
+     },
+     "nom": "de farine",
+     "det": "En alternance avec le lait",
+     "timer": 0
+    },
+    {
+     "act": "Verser",
+     "qte": {
+      "n": 500,
+      "u": "ml"
+     },
+     "nom": "de lait",
+     "det": "Progressivement, en alternance",
+     "timer": 0
+    },
+    {
+     "act": "Ajouter",
+     "qte": {
+      "n": 50,
+      "u": "g"
+     },
+     "nom": "de sucre en poudre",
+     "det": "",
+     "timer": 0
+    },
+    {
+     "act": "Ajouter",
+     "qte": {
+      "n": 1,
+      "u": "pincée"
+     },
+     "nom": "de sel",
+     "det": "",
+     "timer": 0
+    },
+    {
+     "act": "Ajouter",
+     "gros": "le beurre",
+     "nom": "refroidi",
+     "det": "Tiède, jamais chaud",
+     "timer": 0
+    },
+    {
+     "act": "Mélanger",
+     "gros": "1 min",
+     "nom": "au fouet",
+     "det": "Jusqu'à obtenir une pâte homogène",
+     "timer": 60
+    },
+    {
+     "act": "Laisser reposer",
+     "gros": "1 h",
+     "nom": "à couvert",
+     "det": "Torchon propre sur le saladier",
+     "timer": 3600
+    },
+    {
+     "act": "Cuire",
+     "gros": "1 à 2 min",
+     "nom": "par face",
+     "det": "Gaufrier chaud, rempli aux trois quarts",
+     "timer": 90
+    }
+   ],
+   "variantes": [
+    "Un sachet de levure chimique (11 g) pour des gaufres plus aérées — absent de la liste d'ingrédients d'origine.",
+    "Remplacez 10 cl de lait par de la bière blonde : les gaufres deviennent plus croustillantes."
+   ],
+   "service": "Sucre, pâte à tartiner, confiture, glace, essence de citron ou d'orange.",
+   "conservation": "Les gaufres cuites se gardent 2 jours dans un torchon, ou se congèlent et se réchauffent au grille-pain."
+  },
+  {
+   "id": "boulettes-suedoises",
+   "titre": "Boulettes suédoises façon IKEA",
+   "categorie": "Plats",
+   "accroche": "Viande hachée, sauce crémeuse au bouillon et Worcestershire — le plat du magasin, à la maison",
+   "personnes": 6,
+   "personnesTexte": "6 personnes · 12 grosses ou 20 petites",
+   "prep": "10 min",
+   "cuisson": "20 min",
+   "repos": "",
+   "auteur": "Celine",
+   "source": {
+    "nom": "comment-economiser.fr",
+    "url": "https://www.comment-economiser.fr/recette-des-boulettes-viande-suedoises-chez-ikea.html"
+   },
+   "ingredients": [
+    {
+     "q": 1000,
+     "u": "g",
+     "nom": "viande de bœuf hachée"
+    },
+    {
+     "q": 70,
+     "u": "g",
+     "nom": "chapelure"
+    },
+    {
+     "q": 1,
+     "u": "c. à soupe",
+     "nom": "persil haché"
+    },
+    {
+     "q": 0.25,
+     "u": "c. à café",
+     "nom": "piment"
+    },
+    {
+     "q": 0.25,
+     "u": "c. à café",
+     "nom": "noix de muscade"
+    },
+    {
+     "q": 70,
+     "u": "g",
+     "nom": "oignons émincés"
+    },
+    {
+     "q": 0.5,
+     "u": "c. à café",
+     "nom": "ail en poudre"
+    },
+    {
+     "q": 1,
+     "u": "pincée",
+     "nom": "poivre noir"
+    },
+    {
+     "q": 0.5,
+     "u": "c. à café",
+     "nom": "sel"
+    },
+    {
+     "q": 1,
+     "u": "",
+     "nom": "œuf"
+    },
+    {
+     "q": 1,
+     "u": "c. à soupe",
+     "nom": "huile d'olive"
+    },
+    {
+     "q": 75,
+     "u": "g",
+     "nom": "beurre (15 g pour la cuisson, 60 g pour la sauce)"
+    },
+    {
+     "q": 50,
+     "u": "g",
+     "nom": "farine"
+    },
+    {
+     "q": 500,
+     "u": "ml",
+     "nom": "bouillon de bœuf"
+    },
+    {
+     "q": 230,
+     "u": "ml",
+     "nom": "crème fraîche"
+    },
+    {
+     "q": 1,
+     "u": "c. à soupe",
+     "nom": "sauce Worcestershire"
+    },
+    {
+     "q": 1,
+     "u": "c. à café",
+     "nom": "moutarde de Dijon"
+    }
+   ],
+   "materiel": [
+    "Un saladier",
+    "Une poêle assez grande",
+    "Un fouet",
+    "Une spatule",
+    "Papier cuisson"
+   ],
+   "etapes": [
+    {
+     "t": "La farce",
+     "txt": "Dans un récipient, mélangez la viande hachée avec la chapelure, le persil, le piment, la muscade, l'oignon, la poudre d'ail, le sel et l'œuf. Remuez jusqu'à obtenir un mélange homogène, puis façonnez à la main 12 grosses boulettes ou 20 petites.",
+     "astuce": "Une farce trop travaillée donne des boulettes compactes. Mélangez juste assez pour lier, sans pétrir."
+    },
+    {
+     "t": "Dorer les boulettes",
+     "txt": "Dans une poêle, faites chauffer l'huile avec 15 g de beurre. Déposez les boulettes et retournez-les souvent jusqu'à ce qu'elles soient dorées de tous les côtés et bien cuites. Transférez-les dans un plat et couvrez d'une feuille de papier cuisson.",
+     "attention": "Ne surchargez pas la poêle : des boulettes serrées rendent de l'eau et bouillent au lieu de dorer. Procédez en deux fournées si besoin."
+    },
+    {
+     "t": "La sauce crémeuse",
+     "txt": "Dans la même poêle, faites chauffer 60 g de beurre, ajoutez la farine et fouettez jusqu'à ce que le mélange brunisse. Incorporez doucement le bouillon, puis la crème fraîche, la sauce Worcestershire et la moutarde de Dijon. Laissez mijoter jusqu'à ce que la sauce épaississe, salez et poivrez.",
+     "astuce": "Le roux doit brunir sans brûler : dès qu'il prend une couleur noisette, versez le bouillon. C'est ce qui donne la couleur et le goût de la sauce IKEA."
+    },
+    {
+     "t": "Finir et servir",
+     "txt": "Remettez les boulettes dans la poêle et laissez mijoter 1 à 2 minutes. Servez avec des nouilles, du riz ou une purée de pommes de terre.",
+     "astuce": "La sauce épaissit en refroidissant : prévoyez-la un peu plus liquide que voulu avant d'ajouter les boulettes."
+    }
+   ],
+   "guide": [
+    {
+     "act": "Verser",
+     "qte": {
+      "n": 1000,
+      "u": "g"
+     },
+     "nom": "de viande de bœuf hachée",
+     "det": "Dans un grand saladier",
+     "timer": 0
+    },
+    {
+     "act": "Ajouter",
+     "qte": {
+      "n": 70,
+      "u": "g"
+     },
+     "nom": "de chapelure",
+     "det": "",
+     "timer": 0
+    },
+    {
+     "act": "Ajouter",
+     "qte": {
+      "n": 1,
+      "u": "c. à soupe"
+     },
+     "nom": "de persil haché",
+     "det": "",
+     "timer": 0
+    },
+    {
+     "act": "Ajouter",
+     "qte": {
+      "n": 0.25,
+      "u": "c. à café"
+     },
+     "nom": "de piment",
+     "det": "",
+     "timer": 0
+    },
+    {
+     "act": "Ajouter",
+     "qte": {
+      "n": 0.25,
+      "u": "c. à café"
+     },
+     "nom": "de noix de muscade",
+     "det": "",
+     "timer": 0
+    },
+    {
+     "act": "Ajouter",
+     "qte": {
+      "n": 70,
+      "u": "g"
+     },
+     "nom": "d'oignons émincés",
+     "det": "",
+     "timer": 0
+    },
+    {
+     "act": "Ajouter",
+     "qte": {
+      "n": 0.5,
+      "u": "c. à café"
+     },
+     "nom": "d'ail en poudre",
+     "det": "",
+     "timer": 0
+    },
+    {
+     "act": "Assaisonner",
+     "qte": {
+      "n": 0.5,
+      "u": "c. à café"
+     },
+     "nom": "de sel",
+     "det": "Et une pincée de poivre noir",
+     "timer": 0
+    },
+    {
+     "act": "Ajouter",
+     "qte": {
+      "n": 1,
+      "u": ""
+     },
+     "nom": "œuf",
+     "det": "Entier",
+     "timer": 0
+    },
+    {
+     "act": "Mélanger",
+     "gros": "à la main",
+     "nom": "jusqu'à homogène",
+     "det": "Sans pétrir, juste assez pour lier",
+     "timer": 60
+    },
+    {
+     "act": "Façonner",
+     "gros": "12 boulettes",
+     "nom": "ou 20 petites",
+     "det": "À la main, de taille régulière",
+     "timer": 0
+    },
+    {
+     "act": "Chauffer",
+     "qte": {
+      "n": 1,
+      "u": "c. à soupe"
+     },
+     "nom": "d'huile d'olive",
+     "det": "Avec 15 g de beurre, dans une grande poêle",
+     "timer": 0
+    },
+    {
+     "act": "Dorer",
+     "gros": "8 à 10 min",
+     "nom": "en retournant souvent",
+     "det": "Jusqu'à ce qu'elles soient dorées de tous les côtés",
+     "timer": 540
+    },
+    {
+     "act": "Réserver",
+     "gros": "les boulettes",
+     "nom": "sous papier cuisson",
+     "det": "Dans un plat, le temps de faire la sauce",
+     "timer": 0
+    },
+    {
+     "act": "Faire fondre",
+     "qte": {
+      "n": 60,
+      "u": "g"
+     },
+     "nom": "de beurre",
+     "det": "Dans la même poêle",
+     "timer": 0
+    },
+    {
+     "act": "Ajouter",
+     "qte": {
+      "n": 50,
+      "u": "g"
+     },
+     "nom": "de farine",
+     "det": "Fouetter jusqu'à ce que le mélange brunisse",
+     "timer": 0
+    },
+    {
+     "act": "Verser",
+     "qte": {
+      "n": 500,
+      "u": "ml"
+     },
+     "nom": "de bouillon de bœuf",
+     "det": "Doucement, en fouettant",
+     "timer": 0
+    },
+    {
+     "act": "Ajouter",
+     "qte": {
+      "n": 230,
+      "u": "ml"
+     },
+     "nom": "de crème fraîche",
+     "det": "",
+     "timer": 0
+    },
+    {
+     "act": "Ajouter",
+     "qte": {
+      "n": 1,
+      "u": "c. à soupe"
+     },
+     "nom": "de sauce Worcestershire",
+     "det": "Avec 1 c. à café de moutarde de Dijon",
+     "timer": 0
+    },
+    {
+     "act": "Laisser mijoter",
+     "gros": "5 min",
+     "nom": "jusqu'à épaississement",
+     "det": "Saler et poivrer selon votre goût",
+     "timer": 300
+    },
+    {
+     "act": "Remettre",
+     "gros": "les boulettes",
+     "nom": "dans la sauce",
+     "det": "Laisser mijoter 1 à 2 min",
+     "timer": 90
+    },
+    {
+     "act": "Servir",
+     "gros": "nouilles",
+     "nom": "riz ou purée",
+     "det": "Bien chaud, avec la sauce nappée",
+     "timer": 0
+    }
+   ],
+   "variantes": [
+    "Sans porc, comme ici : la recette est 100 % bœuf.",
+    "La sauce Worcestershire est l'ingrédient qui fait la différence — ne la remplacez pas par du vinaigre balsamique, le goût n'a rien à voir.",
+    "Version express : des boulettes surgelées passent très bien dans cette sauce, il ne reste que les 10 minutes de sauce."
+   ],
+   "service": "Nouilles aux œufs, riz ou purée de pommes de terre.",
+   "conservation": "3 jours au réfrigérateur. La sauce se congèle mal (la crème tranche) : congelez les boulettes seules."
+  }
+ ]
+};</script>
+<script>
+(function(){
+  const L = window.LIVRE;
+  document.getElementById('surtitre').textContent = 'Recueil de cuisine';
+  document.getElementById('st-livre').textContent = L.livre.sousTitre;
+  document.getElementById('nb').textContent = L.recettes.length;
+  document.getElementById('maj').textContent = L.livre.maj;
+  document.getElementById('auteur').textContent = L.livre.auteur;
+
+  // sommaire groupé
+  const som = document.getElementById('sommaire');
+  const cats = [...new Set(L.recettes.map(r=>r.categorie))];
+  let n = 0;
+  cats.forEach(cat=>{
+    const d=document.createElement('div'); d.className='cat'; d.textContent=cat; som.appendChild(d);
+    L.recettes.filter(r=>r.categorie===cat).forEach(r=>{
+      n++;
+      const b=document.createElement('button'); b.className='item'; b.dataset.id=r.id;
+      b.innerHTML=`<span class="n">${String(n).padStart(2,'0')}</span>${r.titre}`;
+      b.onclick=()=>afficher(r.id);
+      som.appendChild(b);
+    });
+  });
+
+  let facteur = 1;
+
+  function fmt(q){
+    const v = q*facteur;
+    if(Math.abs(v-Math.round(v))<0.001) return String(Math.round(v));
+    if(v<1 && v>0){
+      const fr = {0.25:'¼', 0.5:'½', 0.75:'¾'};
+      return fr[Math.round(v*100)/100] || (Math.round(v*100)/100).toString().replace('.',',');
+    }
+    return (Math.round(v*10)/10).toString().replace('.',',');
+  }
+  function uniteAuto(v,u){
+    if(u==='g' && v>=1000){ const kg=v/1000; return (Math.abs(kg-Math.round(kg))<0.001? String(Math.round(kg)) : kg.toFixed(1).replace('.',','))+' kg'; }
+    if(u==='ml' && v>=1000){ const l=v/1000; return (Math.abs(l-Math.round(l))<0.001? String(Math.round(l)) : l.toFixed(1).replace('.',','))+' l'; }
+    return v+' '+u;
+  }
+
+  function afficher(id){
+    const r = L.recettes.find(x=>x.id===id) || L.recettes[0];
+    facteur = 1;
+    document.querySelectorAll('.item').forEach(el=>el.classList.toggle('on', el.dataset.id===r.id));
+
+    const ing = r.ingredients.map(i=>`<li><span class="q">${uniteAuto(i.q*facteur, i.u)}</span><span>${i.nom}</span></li>`).join('');
+    const etapes = r.etapes.map(e=>`<li>
+        <h4>${e.t}</h4>
+        <p>${e.txt}</p>
+        ${e.attention?`<div class="aten"><b>Attention</b>${e.attention}</div>`:''}
+        ${e.astuce?`<div class="astuce"><b>Astuce</b>${e.astuce}</div>`:''}
+      </li>`).join('');
+
+    document.getElementById('recette').innerHTML = `
+      <div class="kicker">${r.categorie} · ${r.auteur || r.source.nom}</div>
+      <h2>${r.titre}</h2>
+      <p class="accroche">${r.accroche}</p>
+      ${r.guide?`<button class="btn-cuisine" data-recette="${r.id}"><span class="pt"></span>Mode cuisine — pas à pas</button>`:''}
+
+      <div class="meta">
+        <div><span class="k">Personnes</span><span class="v">${r.personnesTexte}</span></div>
+        <div><span class="k">Préparation</span><span class="v">${r.prep}</span></div>
+        ${r.repos?`<div><span class="k">Repos</span><span class="v">${r.repos}</span></div>`:''}
+        <div><span class="k">Cuisson</span><span class="v">${r.cuisson}</span></div>
+      </div>
+
+      <div class="ingredients">
+        <div class="tete">
+          <h3>Ingrédients</h3>
+          <div class="doseurs" id="doseurs">
+            <button data-f="0.5">÷ 2</button>
+            <button data-f="1" class="on">× 1</button>
+            <button data-f="2">× 2</button>
+            <button data-f="3">× 3</button>
+          </div>
+        </div>
+        <ul id="liste-ing">${ing}</ul>
+      </div>
+
+      <ol class="etapes">${etapes}</ol>
+
+      ${r.variantes?`<div class="bloc"><h3>Variantes</h3><ul>${r.variantes.map(v=>`<li>${v}</li>`).join('')}</ul></div>`:''}
+      ${r.service?`<div class="bloc"><h3>Service</h3><p>${r.service}</p></div>`:''}
+      ${r.conservation?`<div class="bloc"><h3>Conservation</h3><p>${r.conservation}</p></div>`:''}
+      ${r.materiel?`<div class="bloc"><h3>Matériel</h3><p>${r.materiel.join(' · ')}</p></div>`:''}
+
+      <p class="source">Source : <a href="${r.source.url}" target="_blank" rel="noopener">${r.source.nom}</a></p>`;
+
+    document.querySelectorAll('#doseurs button').forEach(b=>{
+      b.onclick=()=>{
+        facteur = parseFloat(b.dataset.f);
+        document.querySelectorAll('#doseurs button').forEach(x=>x.classList.toggle('on', x===b));
+        document.getElementById('liste-ing').innerHTML = r.ingredients.map(i=>`<li><span class="q">${uniteAuto(i.q*facteur, i.u)}</span><span>${i.nom}</span></li>`).join('');
+        if(M.recette) changerFacteur(facteur);
+      };
+    });
+
+    const bc = document.querySelector('.btn-cuisine');
+    if(bc) bc.onclick = ()=> ouvrirMode(r.id);
+
+    history.replaceState(null,'','#'+r.id);
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+
+  /* ---------- mode cuisine plein écran ---------- */
+  const M = {
+    recette:null, i:0, interval:null, restant:0
+  };
+  const el = id => document.getElementById(id);
+
+  function vibre(ms){ if(navigator.vibrate) navigator.vibrate(ms); }
+
+  function ouvrirMode(id){
+    const r = L.recettes.find(x=>x.id===id);
+    if(!r || !r.guide) return;
+    M.recette = r; M.i = 0;
+    el('mode-titre').textContent = r.titre;
+    el('mode').classList.add('on');
+    el('mode').classList.remove('termine');
+    el('mode').setAttribute('aria-hidden','false');
+    document.body.style.overflow='hidden';
+    construireSegments();
+    rendreEtape();
+  }
+
+  function fermerMode(){
+    arreterChrono();
+    el('mode').classList.remove('on','termine');
+    el('mode').setAttribute('aria-hidden','true');
+    document.body.style.overflow='';
+  }
+
+  function construireSegments(){
+    const box = el('segments'); box.innerHTML='';
+    M.recette.guide.forEach(()=> box.appendChild(document.createElement('i')));
+  }
+
+  function formatDuree(sec){
+    const h = Math.floor(sec/3600), m = Math.floor((sec%3600)/60), s = sec%60;
+    if(h>0) return `${h} h ${String(m).padStart(2,'0')}`;
+    return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  }
+
+  function arreterChrono(){
+    if(M.interval){ clearInterval(M.interval); M.interval=null; }
+    const c = el('mode-chrono'); if(c) c.classList.remove('actif','fini');
+  }
+
+  function rendreEtape(){
+    const g = M.recette.guide[M.i];
+    const total = M.recette.guide.length;
+    arreterChrono();
+
+    const centre = el('mode-centre');
+    centre.classList.remove('anim'); void centre.offsetWidth; centre.classList.add('anim');
+
+    el('mode-acte').textContent = g.act;
+    el('mode-q').textContent = g.qte ? texteQuantite(g.qte) : (g.gros || '');
+    el('mode-nom').textContent = g.nom;
+    majFacteur();
+    el('mode-det').textContent = g.det || '';
+    el('mode-compte').textContent = `${M.i+1} / ${total}`;
+
+    document.querySelectorAll('#segments i').forEach((seg,k)=>{
+      seg.className = k<M.i ? 'fait' : (k===M.i ? 'courant' : '');
+    });
+
+    const ch = el('mode-chrono');
+    if(g.timer && g.timer>0){
+      ch.classList.add('on');
+      M.restant = g.timer;
+      el('mode-restant').textContent = formatDuree(M.restant);
+      el('mode-demarrer').textContent = `Minuteur ${formatDuree(g.timer)}`;
+    } else {
+      ch.classList.remove('on');
+    }
+
+    el('mode-retour').style.visibility = M.i===0 ? 'hidden' : 'visible';
+    el('mode-valider').textContent = M.i===total-1 ? 'Terminer' : 'Validé';
+  }
+
+  function demarrerChrono(){
+    const g = M.recette.guide[M.i];
+    if(!g.timer) return;
+    const ch = el('mode-chrono');
+    ch.classList.add('actif');
+    vibre(20);
+    M.interval = setInterval(()=>{
+      M.restant--;
+      el('mode-restant').textContent = formatDuree(Math.max(0,M.restant));
+      if(M.restant<=0){
+        arreterChrono();
+        ch.classList.add('fini');
+        el('mode-restant').textContent = 'Terminé';
+        vibre([80,60,80]);
+      }
+    },1000);
+  }
+
+  function texteQuantite(qte){
+    const v = qte.n * facteur;
+    let txt;
+    if(Math.abs(v - Math.round(v)) < 0.001){
+      txt = String(Math.round(v));
+    } else if(v < 1 && v > 0){
+      const fr = {0.25:'¼', 0.5:'½', 0.75:'¾'};
+      txt = fr[Math.round(v*100)/100] || (Math.round(v*100)/100).toString().replace('.',',');
+    } else {
+      txt = (Math.round(v*10)/10).toString().replace('.',',');
+    }
+    if(!qte.u) return txt;
+    if(qte.u==='g' && v>=1000) return uniteAuto(v,'g');
+    if(qte.u==='ml' && v>=1000) return uniteAuto(v,'ml');
+    return `${txt} ${qte.u}`;
+  }
+
+  function majFacteur(){
+    document.querySelectorAll('#mode-facteur button').forEach(b=>
+      b.classList.toggle('on', parseFloat(b.dataset.f)===facteur));
+  }
+
+  function changerFacteur(f){
+    facteur = f;
+    // le carnet et l'écran de cuisine restent alignés
+    const liste = document.getElementById('liste-ing');
+    if(liste && M.recette){
+      liste.innerHTML = M.recette.ingredients.map(i=>`<li><span class="q">${uniteAuto(i.q*facteur, i.u)}</span><span>${i.nom}</span></li>`).join('');
+    }
+    document.querySelectorAll('#doseurs button').forEach(x=>x.classList.toggle('on', parseFloat(x.dataset.f)===facteur));
+    if(M.recette && M.recette.guide && M.recette.guide[M.i]){
+      const g = M.recette.guide[M.i];
+      el('mode-q').textContent = g.qte ? texteQuantite(g.qte) : (g.gros || '');
+    }
+    majFacteur();
+  }
+
+  function valider(){
+    if(M.i >= M.recette.guide.length-1){
+      arreterChrono();
+      el('mode').classList.add('termine');
+      el('fin-titre').textContent = 'C\'est prêt';
+      el('fin-texte').textContent = `${M.recette.titre} — ${M.recette.guide.length} étapes validées. ${M.recette.service || ''}`;
+      vibre([40,40,40]);
+      return;
+    }
+    M.i++;
+    vibre(12);
+    rendreEtape();
+  }
+
+  function precedent(){
+    if(M.i>0){ M.i--; rendreEtape(); }
+  }
+
+  el('mode-valider').onclick = e=>{ e.stopPropagation(); valider(); };
+  el('mode-retour').onclick = e=>{ e.stopPropagation(); precedent(); };
+  el('mode-quitter').onclick = e=>{ e.stopPropagation(); fermerMode(); };
+  el('fin-fermer').onclick = e=>{ e.stopPropagation(); fermerMode(); };
+  el('mode-demarrer').onclick = e=>{ e.stopPropagation(); demarrerChrono(); };
+  document.querySelectorAll('#mode-facteur button').forEach(b=>{
+    b.onclick = e=>{ e.stopPropagation(); changerFacteur(parseFloat(b.dataset.f)); };
+  });
+  el('mode-centre').onclick = ()=> valider();
+  el('mode-chrono').onclick = e=> e.stopPropagation();
+
+  document.addEventListener('keydown', e=>{
+    if(!el('mode').classList.contains('on')) return;
+    if(e.key==='Escape') fermerMode();
+    if(e.key===' '||e.key==='Enter'){ e.preventDefault(); valider(); }
+    if(e.key==='ArrowLeft') precedent();
+  });
+
+  const dep = location.hash.replace('#','');
+  afficher(L.recettes.some(r=>r.id===dep) ? dep : L.recettes[0].id);
+
+  // hors-ligne : lisible dans la cuisine même sans wifi
+  if(location.protocol==='https:' && 'serviceWorker' in navigator){
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  }
+})();
+</script>
+</body>
+</html>
