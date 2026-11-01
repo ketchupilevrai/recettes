@@ -1395,6 +1395,12 @@
   // hors-ligne : lisible dans la cuisine même sans wifi
   if(location.protocol==='https:' && 'serviceWorker' in navigator){
     navigator.serviceWorker.register('sw.js').catch(()=>{});
+    // quand une nouvelle version prend la main, on recharge une seule fois
+    navigator.serviceWorker.addEventListener('controllerchange',()=>{
+      if(sessionStorage.getItem('sw-maj')) return;
+      sessionStorage.setItem('sw-maj','1');
+      location.reload();
+    });
   }
 })();
 </script>
